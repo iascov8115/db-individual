@@ -1,12 +1,3 @@
--- For migrations
-CREATE
-USER flyway WITH PASSWORD 'flywayPass';
-CREATE SCHEMA app AUTHORIZATION flyway;
-GRANT
-CREATE
-, USAGE ON SCHEMA app TO flyway;
-
-
 CREATE TABLE regions
 (
     region_id   SERIAL PRIMARY KEY,
