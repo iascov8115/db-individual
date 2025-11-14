@@ -6,12 +6,17 @@ SET search_path TO app;
 CREATE OR REPLACE PROCEDURE insert_regions(cnt INT)
     LANGUAGE plpgsql AS
 $$
+DECLARE
+    countries     TEXT[] := ARRAY ['Moldova', 'Bulgaria', 'Romania'];
+    country_index INT;
 BEGIN
     FOR i IN 1..cnt
         LOOP
+            country_index := ((i - 1) % array_length(countries, 1)) + 1;
+
             INSERT INTO regions(region_name, country, region_code, description, is_active)
             VALUES ('Region ' || i,
-                    'Country ' || i,
+                    countries[country_index],
                     'R' || LPAD(i::text, 3, '0'),
                     'Auto-generated region ' || i,
                     TRUE);
