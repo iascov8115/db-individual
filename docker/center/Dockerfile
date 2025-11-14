@@ -1,0 +1,8 @@
+FROM postgres:15
+
+# Просто положим наш скрипт в контейнер
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["postgres"]
