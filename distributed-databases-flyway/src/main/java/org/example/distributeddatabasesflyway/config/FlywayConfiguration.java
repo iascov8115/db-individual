@@ -24,4 +24,21 @@ public class FlywayConfiguration {
                 .baselineOnMigrate(true)
                 .load();
     }
+
+    @Bean("flywayDwh")
+    public Flyway flywayDwh(Environment env) {
+        String url = env.getProperty("flyway.dwh.url");
+        String user = env.getProperty("flyway.dwh.user");
+        String password = env.getProperty("flyway.dwh.password");
+        String schemas = env.getProperty("flyway.dwh.schemas");
+        String locations = env.getProperty("flyway.dwh.locations");
+        String defaultSchema = env.getProperty("flyway.dwh.default-schema");
+
+        return Flyway.configure().dataSource(url, user, password)
+                .schemas(schemas)
+                .locations(locations)
+                .defaultSchema(defaultSchema)
+                .baselineOnMigrate(true)
+                .load();
+    }
 }
