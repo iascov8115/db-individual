@@ -1,26 +1,27 @@
 package org.example.distributeddatabasesflyway.service;
 
-import org.flywaydb.core.Flyway;
+import org.example.distributeddatabasesflyway.config.FlywayRegistry;
+import org.example.distributeddatabasesflyway.constants.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 @Service
 public class FlywayLauncherServiceImpl implements FlywayLauncherService {
 
-    private final Flyway flyway;
-    private final Flyway flywayDwh;
+    private final FlywayRegistry flywayRegistry;
 
     @Autowired
-    public FlywayLauncherServiceImpl(@Qualifier("flywayMoldova") Flyway flyway, Flyway flywayDwh) {
-        this.flyway = flyway;
-        this.flywayDwh = flywayDwh;
+    public FlywayLauncherServiceImpl(FlywayRegistry flywayRegistry) {
+        this.flywayRegistry = flywayRegistry;
     }
 
     @Override
     public Integer launch() {
-        flyway.migrate();
-        flywayDwh.migrate();
+
+        flywayRegistry.getFlyway(Constants.FLYWAY_MOLDOVA).migrate();
+        flywayRegistry.getFlyway(Constants.FLYWAY_ROMANIA).migrate();
+        flywayRegistry.getFlyway(Constants.FLYWAY_BULGARIA).migrate();
+        flywayRegistry.getFlyway(Constants.FLYWAY_DWH).migrate();
 
         return 0;
     }
