@@ -1,55 +1,138 @@
 volumes:
-  postgres_moldova:
-  postgres_romania:
-  postgres_bulgaria:
+  moldova_data:
+  romania_data:
+  bulgaria_data:
+  moldova_replica_data:
+  romania_replica_data:
+  bulgaria_replica_data:
   postgres_dwh:
 
 services:
-  postgres:
-    image: postgres:15
-    container_name: postgres_db
-    environment:
-      POSTGRES_DB: delivery_db
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./docker/data:/var/lib/postgresql/data
-      - ./docker/init:/docker-entrypoint-initdb.d
-  
   db_moldova:
+    build:
+      context: ./docker/center
+    container_name: db_moldova
     image: postgres:15
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+      REPL_USER: replicator
+      REPL_PASSWORD: replicator_pass
+    command: >
+      postgres
+        -c wal_level=logical
+        -c max_replication_slots=10
+        -c max_wal_senders=10
     ports:
       - "5433:5432"
     volumes:
-      - postgres_moldova:/var/lib/postgresql/data
-      - ./docker/init:/docker-entrypoint-initdb.d
+      - moldova_data:/var/lib/postgresql/data
+      - ./docker/init/moldova:/docker-entrypoint-initdb.d
+    networks:
+      - default
 
   db_romania:
+    container_name: db_romania
+    build:
+      context: ./docker/nodes
     image: postgres:15
     environment:
+      POSTGRES_DB: postgres
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
     ports:
       - "5434:5432"
     volumes:
-      - postgres_romania:/var/lib/postgresql/data
-      - ./docker/init:/docker-entrypoint-initdb.d
+      - romania_data:/var/lib/postgresql/data
+      - ./docker/init/romania:/docker-entrypoint-initdb.d
+    depends_on:
+      - db_moldova
+    networks:
+      - default
 
   db_bulgaria:
+    container_name: db_bulgaria
     image: postgres:15
     environment:
+      POSTGRES_DB: postgres
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
     ports:
       - "5435:5432"
     volumes:
-      - postgres_bulgaria:/var/lib/postgresql/data
-      - ./docker/init:/docker-entrypoint-initdb.d
+      - bulgaria_data:/var/lib/postgresql/data
+      - ./docker/init/bulgaria:/docker-entrypoint-initdb.d
+    depends_on:
+      - db_moldova
+    networks:
+      - default
+
+  db_moldova_replica:
+    container_name: db_moldova_replica
+    image: postgres:15
+    build:
+      context: ./docker/nodes
+    environment:
+      PGROLE: replica
+      PRIMARY_HOST: db_moldova
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+      REPL_USER: replicator
+      REPL_PASSWORD: replicator_pass
+    ports:
+      - "5436:5432"
+    volumes:
+      - moldova_replica_data:/var/lib/postgresql/data
+    depends_on:
+      - db_moldova
+    networks:
+      - default
+
+  db_romania_replica:
+    container_name: db_romania_replica
+    image: postgres:15
+    build:
+      context: ./docker/nodes
+    environment:
+      PGROLE: replica
+      PRIMARY_HOST: db_romania
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+      REPL_USER: replicator
+      REPL_PASSWORD: replicator_pass
+    ports:
+      - "5437:5432"
+    volumes:
+      - romania_replica_data:/var/lib/postgresql/data
+    depends_on:
+      - db_romania
+    networks:
+      - default
+
+  db_bulgaria_replica:
+    container_name: db_bulgaria_replica
+    image: postgres:15
+    build:
+      context: ./docker/nodes
+    environment:
+      PGROLE: replica
+      PRIMARY_HOST: db_bulgaria
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+      REPL_USER: replicator
+      REPL_PASSWORD: replicator_pass
+    ports:
+      - "5438:5432"
+    volumes:
+      - bulgaria_replica_data:/var/lib/postgresql/data
+    depends_on:
+      - db_bulgaria
+    networks:
+      - default
 
   dwh:
     image: postgres:15
@@ -63,3 +146,7 @@ services:
     volumes:
       - postgres_dwh:/var/lib/postgresql/data
       - ./docker/init-dwh:/docker-entrypoint-initdb.d
+
+networks:
+  default:
+    driver: bridge
