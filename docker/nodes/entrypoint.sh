@@ -18,6 +18,7 @@ if [ "$ROLE" = "primary" ]; then
     -c wal_level=replica \
     -c max_wal_senders=10 \
     -c max_replication_slots=10 \
+    -c max_prepared_transactions = 10 \
     -c hot_standby=on
 
 
